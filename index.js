@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const jwt=require("jsonwebtoken")
 const { MongoClient, ServerApiVersion } = require('mongodb');
 require ('dotenv').config();
 const app=express();
@@ -22,6 +23,11 @@ const client = new MongoClient(url, {
     }
   });
 
+
+//   collections
+const userCollection=client.db("globalbazar").collection("users");
+const productCollection=client.db("globalbazar").collection("products");
+
   const dbConnect=async()=>{
     try{
         client.connect()
@@ -34,9 +40,33 @@ const client = new MongoClient(url, {
 
   dbConnect()
 
+//   insert user 
+app.post("/users",async(req,res)=>{
+    const user=req.body
+    const query={email:user.email}
+    const existingUser=await userCollection.findOne(query)
+    if(existingUser){
+        return res.send({message:"user already exist"})
+    }
+
+    const result=await userCollection.insertOne(user)
+    res.send(result)
+})
+
+
+
+
+
 // api
 app.get("/",(req,res)=>{
     res.send('globalbazar server is running')
+})
+
+// jwt
+app.post("/authentication",async(req,res)=>{
+    const userEmail=req.body;
+    const token=jwt.sign(userEmail,process.env.ACCESS_KEY_TOKEN,{expiresIn:'10d'})
+    res.send({token:token})
 })
 
 app.listen(port,()=>{
