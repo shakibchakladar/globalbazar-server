@@ -98,6 +98,34 @@ app.patch("/wishlist/add", async (req, res) => {
   res.send(result);
 });
 
+// remove from wishlist
+app.patch("/wishlist/remove", async (req, res) => {
+  const { userEmail, productId } = req.body;
+  const result = await userCollection.updateOne(
+    { email: userEmail },
+    { $pull: { wishlist: new ObjectId(String(productId)) } }
+  );
+  res.send(result);
+});
+
+// get data from wishlist
+app.get("/wishlist/:userId", verifyJWT, async (req, res) => {
+  const { userId } = req.params;
+  // console.log(userId);
+  const user = await userCollection.findOne({
+    _id: new ObjectId(String(userId)),
+  });
+
+  if (!user) {
+    return res.send({ message: "user not found" });
+  }
+
+  const wishlist = await productCollection
+    .find({ _id: { $in: user.wishlist || [] } })
+    .toArray();
+  res.send(wishlist);
+});
+
 // get products
 app.get("/all-products", async (req, res) => {
   const { title, sort, category, brand, page = 1, limit = 9 } = req.query;
