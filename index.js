@@ -56,6 +56,7 @@ const client = new MongoClient(url, {
 //   collections
 const userCollection = client.db("globalbazar").collection("users");
 const productCollection = client.db("globalbazar").collection("products");
+const cartCollection = client.db("globalbazar").collection("carts");
 
 const dbConnect = async () => {
   try {
@@ -88,6 +89,31 @@ app.post("/add-products", verifyJWT, verifySeller, async (req, res) => {
   res.send(result);
 });
 
+// delete a property
+app.delete("/delete-products/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await productCollection.deleteOne(query);
+  res.send(result);
+});
+
+// get data for my products
+app.get("/my-products/:email", async (req, res) => {
+  try {
+    const email = decodeURIComponent(req.params.email); // Decode email
+    console.log("Decoded Email:", email);
+
+    const query = { email: email };
+    const result = await productCollection.find(query).toArray();
+    res.json(result);
+  } catch (error) {
+    console.error("Error fetching properties:", error);
+    res
+      .status(500)
+      .json({ error: "Error fetching properties. Please try again later." });
+  }
+});
+
 //add to wishlist
 app.patch("/wishlist/add", async (req, res) => {
   const { userEmail, productId } = req.body;
@@ -106,6 +132,41 @@ app.patch("/wishlist/remove", async (req, res) => {
     { $pull: { wishlist: new ObjectId(String(productId)) } }
   );
   res.send(result);
+});
+
+// insert cart data in db
+app.post("/add-cart", async (req, res) => {
+  try {
+    const cartData = req.body;
+    const result = await cartCollection.insertOne(cartData);
+    res.send(result);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+ // remove from cart
+ app.delete("/cart/:id", async (req, res) => {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const result = await cartCollection.deleteOne(query);
+    res.send(result);
+  });
+
+// Get mycard data for a specific user
+app.get("/my-cart/:email", async (req, res) => {
+  const email = req.params.email;
+  const query = {
+    email: email,
+  };
+
+  try {
+    const result = await cartCollection.find(query).toArray();
+    res.json(result);
+  } catch (error) {
+    console.error("Error fetching properties:", error);
+    res.status(400).json({ error: "Internal Server Error" });
+  }
 });
 
 // get data from wishlist
