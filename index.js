@@ -10,6 +10,8 @@ const port = process.env.PORT || 5000;
 app.use(
   cors({
     origin: "http://localhost:5173",
+    headers: ["Content-Type","Authorization"],
+    credentials: true,
     optionsSuccessStatus: 200,
   })
 );
@@ -145,13 +147,13 @@ app.post("/add-cart", async (req, res) => {
   }
 });
 
- // remove from cart
- app.delete("/cart/:id", async (req, res) => {
-    const id = req.params.id;
-    const query = { _id: new ObjectId(id) };
-    const result = await cartCollection.deleteOne(query);
-    res.send(result);
-  });
+// remove from cart
+app.delete("/cart/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await cartCollection.deleteOne(query);
+  res.send(result);
+});
 
 // Get mycard data for a specific user
 app.get("/my-cart/:email", async (req, res) => {
@@ -167,6 +169,24 @@ app.get("/my-cart/:email", async (req, res) => {
     console.error("Error fetching properties:", error);
     res.status(400).json({ error: "Internal Server Error" });
   }
+});
+
+//get all users data
+app.get("/users", async (req, res) => {
+  const result = await userCollection.find().toArray();
+  res.send(result);
+});
+
+//update a user role
+app.patch("/users/update/:email", async (req, res) => {
+  const email = req.params.email;
+  const user = req.body;
+  const query = { email };
+  const updateDoc = {
+    $set: { ...user, timestamp: Date.now() },
+  };
+  const result = await userCollection.updateOne(query, updateDoc);
+  res.send(result);
 });
 
 // get data from wishlist
