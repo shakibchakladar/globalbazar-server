@@ -91,7 +91,7 @@ app.post("/add-products", verifyJWT, verifySeller, async (req, res) => {
   res.send(result);
 });
 
-// delete a property
+// delete a product
 app.delete("/delete-products/:id", async (req, res) => {
   const id = req.params.id;
   const query = { _id: new ObjectId(id) };
